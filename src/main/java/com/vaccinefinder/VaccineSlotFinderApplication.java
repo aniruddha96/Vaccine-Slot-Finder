@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -41,13 +44,12 @@ public class VaccineSlotFinderApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		start();
-
 	}
 
 	public void start() {
 		boolean found=false;
 		LocalDateTime day = LocalDateTime.now();
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < days; i++) {
 			LocalDateTime queryDay = day.plusDays(i);
 			for (String pincode : pincodes) {
 				JsonNode root = getDetails(dateformat.format(queryDay), pincode);
@@ -95,8 +97,12 @@ public class VaccineSlotFinderApplication implements CommandLineRunner {
 		String fooResourceUrl = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin";
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(fooResourceUrl).queryParam("pincode", pincode)
 				.queryParam("date", date);
-
-		ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
+		//System.out.println(builder.toUriString());
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+		HttpEntity<String> entity = new HttpEntity<>("body", headers);
+		ResponseEntity<String> response=restTemplate.exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
+		//ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode root = null;
 		String res = response.getBody();
